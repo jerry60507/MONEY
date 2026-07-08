@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>旅費分帳</title>
+<style>
+  :root{
+    --bg:#EEF2F0; --ink:#16302B; --teal:#0E5A54; --teal-soft:#DDEBE8;
+    --amber:#E8A33D; --amber-soft:#FBEED6; --red:#C4543A;
+    --paper:#FDFDFB; --line:#D5DEDB; --muted:#5E716C; --faint:#8B9A95;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;font-size:15px}
+  .wrap{max-width:460px;margin:0 auto;padding:20px 16px 48px}
+  input,select,button{font-family:inherit;font-size:15px}
+  input:focus,select:focus{outline:2px solid var(--teal);outline-offset:1px}
+  button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .num{font-variant-numeric:tabular-nums;font-family:'SF Mono','Cascadia Mono',Consolas,monospace}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* 票根標題 */
+  .ticket{background:var(--teal);color:var(--paper);border-radius:14px;
+    padding:18px 20px 14px;margin-bottom:16px;position:relative;overflow:hidden}
+  .ticket .eyebrow{font-size:11px;letter-spacing:.25em;opacity:.75;margin-bottom:4px}
+  .ticket input{background:transparent;border:none;color:var(--paper);
+    font-size:22px;font-weight:700;width:100%;padding:0}
+  .ticket .meta{display:flex;justify-content:space-between;margin-top:10px;font-size:13px;opacity:.9}
+  .ticket .hole{position:absolute;top:50%;width:16px;height:16px;border-radius:8px;background:var(--bg)}
+  .ticket .hole.l{left:-8px}.ticket .hole.r{right:-8px}
+
+  nav{display:flex;gap:6px;margin-bottom:16px}
+  nav button{flex:1;padding:10px 0;border-radius:10px;border:none;cursor:pointer;
+    font-weight:600;background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(22,48,43,.08)}
+  nav button.on{background:var(--ink);color:var(--paper);box-shadow:none}
+  nav .badge{margin-left:5px;background:var(--amber);color:var(--ink);border-radius:8px;padding:1px 7px;font-size:12px}
+
+  .card{background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(22,48,43,.08)}
+  .row{display:flex;gap:8px;align-items:center}
+  .field{padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#fff;min-width:0}
+  .btn{padding:0 20px;border-radius:10px;border:none;background:var(--teal);
+    color:var(--paper);font-weight:700;cursor:pointer}
+  .btn.small{padding:8px 14px;font-size:13px;border-radius:9px}
+  .btn.big{width:100%;padding:12px 0;border-radius:10px}
+  .btn:disabled{background:#C7D4D0;cursor:default}
+  .label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+  .link{border:none;background:transparent;color:var(--teal);cursor:pointer;
+    font-size:12px;text-decoration:underline;padding:0}
+  .x{border:none;background:transparent;color:#A3B2AD;cursor:pointer;font-size:17px;line-height:1;padding:2px 4px}
+  .empty{text-align:center;color:#6B7E79;padding:40px 0;font-size:14px}
+
+  .chip{padding:7px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;
+    border:1.5px solid var(--line);background:transparent;color:var(--faint)}
+  .chip.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal)}
+
+  .mode{flex:1;padding:8px 0;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;
+    border:1.5px solid var(--line);background:transparent;color:var(--faint)}
+  .mode.on{border-color:var(--teal);background:var(--teal);color:var(--paper)}
+
+  .item{background:var(--paper);border-radius:10px;padding:12px 14px;margin-bottom:8px;
+    box-shadow:0 1px 2px rgba(22,48,43,.06)}
+  .pos{color:var(--teal)} .neg{color:var(--red)} .zero{color:var(--faint)}
+
+  .rates{background:var(--amber-soft);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+  .hint{font-size:11.5px;color:var(--faint);margin-top:8px}
+  .convert{font-size:12.5px;color:var(--teal);margin-bottom:10px;background:var(--teal-soft);
+    border-radius:7px;padding:6px 10px}
+  .check{font-size:12.5px;margin-top:6px;border-radius:7px;padding:7px 10px;font-weight:600}
+  .check.ok{background:var(--teal-soft);color:var(--teal)}
+  .check.bad{background:#F9E3DC;color:var(--red)}
+  .fill-btn{border:1px solid var(--line);background:transparent;color:var(--teal);cursor:pointer;
+    font-size:11.5px;border-radius:7px;padding:5px 8px;white-space:nowrap}
+
+  /* 收據 */
+  .receipt{background:var(--paper);padding:22px 20px 26px;box-shadow:0 2px 8px rgba(22,48,43,.1);
+    -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,
+      radial-gradient(circle at 8px 0,transparent 8px,#000 8px) bottom/16px 8px repeat-x;
+    mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,
+      radial-gradient(circle at 8px 0,transparent 8px,#000 8px) bottom/16px 8px repeat-x}
+  .receipt .head{text-align:center;border-bottom:1.5px dashed var(--line);padding-bottom:14px;margin-bottom:14px}
+  .receipt .sect{font-size:12px;color:var(--faint);margin-bottom:8px}
+  .balrow{display:flex;justify-content:space-between;padding:5px 0;font-size:14.5px}
+  .transfer{display:flex;justify-content:space-between;align-items:center;
+    background:var(--teal-soft);border-radius:9px;padding:11px 14px;margin-bottom:8px}
+  .foot{text-align:center;margin-top:16px;font-size:11px;letter-spacing:.2em;color:#A3B2AD}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+"use strict";
+// ═══════════ 儲存層:自動偵測 Claude storage → localStorage → 記憶體 ═══════════
+const KEY = "trip-split-v2";
+let memStore = null;
+const store = {
+  async load() {
+    if (window.storage) {                     // Claude Artifact 環境
+      try { const r = await window.storage.get(KEY); return r && r.value ? JSON.parse(r.value) : null; }
+      catch(e){ return null; }
+    }
+    try {                                     // 一般瀏覽器
+      const v = localStorage.getItem(KEY);
+      return v ? JSON.parse(v) : null;
+    } catch(e){ return memStore; }            // 極少數不允許 localStorage 的環境
+  },
+  async save(data) {
+    const s = JSON.stringify(data);
+    if (window.storage) {
+      try { await window.storage.set(KEY, s); return; } catch(e){}
+    }
+    try { localStorage.setItem(KEY, s); } catch(e){ memStore = data; }
+  }
+};
+
+// ═══════════ 狀態 ═══════════
+const COMMON = ["JPY","USD","KRW","EUR","THB","VND","CNY","HKD","SGD","GBP","AUD"];
+let S = {
+  tripName:"我們的旅行", homeCurrency:"TWD", rates:{}, members:[], expenses:[],
+};
+// UI 暫存狀態(不需儲存)
+let U = {
+  tab:"expenses", showRates:false,
+  desc:"", amount:"", currency:"TWD", payer:"", sharers:[],
+  splitMode:"equal", customShares:{}, newMember:"", newCode:"", newRate:"",
+};
+
+const fmt = n => {
+  const r = Math.round(n*100)/100;
+  return Number.isInteger(r) ? r.toLocaleString()
+    : r.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:2});
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rateOf = c => c === S.homeCurrency ? 1 : (S.rates[c] || 0);
+const save = () => store.save(S);
+
+// ═══════════ 結算計算 ═══════════
+function calc(){
+  const bal = Object.fromEntries(S.members.map(m=>[m,0]));
+  let total = 0;
+  for (const e of S.expenses){
+    const rate = e.rate || 1, home = e.amount * rate;
+    total += home;
+    if (bal[e.payer] !== undefined) bal[e.payer] += home;
+    if (e.splitMode === "custom" && e.customShares){
+      for (const [m,v] of Object.entries(e.customShares))
+        if (bal[m] !== undefined) bal[m] -= v * rate;
+    } else {
+      const share = home / e.sharers.length;
+      for (const s of e.sharers) if (bal[s] !== undefined) bal[s] -= share;
+    }
+  }
+  const debtors=[], creditors=[];
+  for (const [m,v] of Object.entries(bal)){
+    if (v < -0.01) debtors.push({m,v:-v});
+    else if (v > 0.01) creditors.push({m,v});
+  }
+  debtors.sort((a,b)=>b.v-a.v); creditors.sort((a,b)=>b.v-a.v);
+  const transfers=[]; let i=0,j=0;
+  while (i<debtors.length && j<creditors.length){
+    const pay = Math.min(debtors[i].v, creditors[j].v);
+    transfers.push({from:debtors[i].m, to:creditors[j].m, amount:pay});
+    debtors[i].v -= pay; creditors[j].v -= pay;
+    if (debtors[i].v < 0.01) i++;
+    if (creditors[j].v < 0.01) j++;
+  }
+  return {bal, transfers, total};
+}
+
+// ═══════════ 動作(掛在 window 供 onclick 使用)═══════════
+const A = window.A = {
+  setTab(t){ U.tab=t; render(); },
+  setTrip(v){ S.tripName=v; save(); renderHeaderMeta(); },
+  // 成員
+  addMember(){
+    const n = U.newMember.trim();
+    if (!n || S.members.includes(n)) return;
+    S.members.push(n); U.newMember="";
+    if (!U.payer) U.payer=n;
+    U.sharers.push(n);
+    save(); render();
+  },
+  removeMember(n){
+    if (S.expenses.some(e=>e.payer===n||e.sharers.includes(n))){
+      alert(`「${n}」已經有帳目紀錄,請先刪除相關帳目再移除成員。`); return;
+    }
+    S.members = S.members.filter(m=>m!==n);
+    U.sharers = U.sharers.filter(m=>m!==n);
+    if (U.payer===n) U.payer="";
+    save(); render();
+  },
+  resetAll(){
+    if (!confirm("確定要清空所有成員與帳目嗎?此動作無法復原。")) return;
+    S.members=[]; S.expenses=[]; S.rates={};
+    U.payer=""; U.sharers=[]; U.customShares={};
+    save(); render();
+  },
+  // 幣別
+  toggleRates(){ U.showRates=!U.showRates; render(); },
+  setHome(v){
+    S.homeCurrency = v.toUpperCase().slice(0,5);
+    if (!S.rates[U.currency] && U.currency!==S.homeCurrency) U.currency=S.homeCurrency;
+    save(); render();
+  },
+  setRate(code,v){ S.rates[code]=parseFloat(v)||0; save(); renderSoft(); },
+  addRate(){
+    const code=U.newCode.trim().toUpperCase(), r=parseFloat(U.newRate);
+    if (!code || !(r>0) || code===S.homeCurrency) return;
+    S.rates[code]=r; U.newCode=""; U.newRate="";
+    save(); render();
+  },
+  removeRate(code){
+    if (S.expenses.some(e=>e.currency===code)){
+      alert(`已有帳目使用 ${code},無法刪除。可直接修改匯率。`); return;
+    }
+    delete S.rates[code];
+    if (U.currency===code) U.currency=S.homeCurrency;
+    save(); render();
+  },
+  // 記帳表單
+  input(k,v){ U[k]=v; renderSoft(); },
+  inputRe(k,v){ U[k]=v; render(); },   // 需要重繪的輸入(幣別、付款人)
+  toggleSharer(m){
+    U.sharers = U.sharers.includes(m) ? U.sharers.filter(x=>x!==m) : [...U.sharers,m];
+    render();
+  },
+  toggleAll(){
+    U.sharers = U.sharers.length===S.members.length ? [] : [...S.members];
+    render();
+  },
+  setMode(m){ U.splitMode=m; render(); },
+  setShare(m,v){ U.customShares[m]=v; renderSoft(); },
+  fillRemain(m){
+    const amt = parseFloat(U.amount)||0;
+    const others = U.sharers.filter(x=>x!==m).reduce((s,x)=>s+(parseFloat(U.customShares[x])||0),0);
+    const remain = Math.round((amt-others)*100)/100;
+    if (remain>=0){ U.customShares[m]=String(remain); render(); }
+  },
+  addExpense(){
+    const v = validate();
+    if (!v.ok) return;
+    const shares = U.splitMode==="custom"
+      ? Object.fromEntries(U.sharers.map(m=>[m,parseFloat(U.customShares[m])||0])) : null;
+    S.expenses.unshift({
+      id:Date.now(), desc:U.desc.trim(), amount:v.amt, currency:U.currency,
+      rate:rateOf(U.currency), payer:U.payer, sharers:[...U.sharers],
+      splitMode:U.splitMode, customShares:shares,
+      date:new Date().toLocaleDateString("zh-TW",{month:"numeric",day:"numeric"}),
+    });
+    U.desc=""; U.amount=""; U.customShares={};
+    save(); render();
+  },
+  removeExpense(id){ S.expenses=S.expenses.filter(e=>e.id!==id); save(); render(); },
+  keyMember(ev){ if(ev.key==="Enter") A.addMember(); },
+};
+
+function validate(){
+  const amt = parseFloat(U.amount)||0;
+  const base = U.desc.trim() && amt>0 && U.payer && U.sharers.length>0 && rateOf(U.currency)>0;
+  if (U.splitMode==="equal") return {ok:!!base, amt};
+  const sum = U.sharers.reduce((s,m)=>s+(parseFloat(U.customShares[m])||0),0);
+  const diff = Math.round((amt-sum)*100)/100;
+  return {ok: !!base && Math.abs(diff)<0.01, amt, sum, diff};
+}
+
+// ═══════════ 渲染 ═══════════
+function balClass(v){ return v>0.01?"pos":v<-0.01?"neg":"zero"; }
+
+function renderHeaderMeta(){
+  const el = document.getElementById("hdr-meta");
+  if (el){
+    const {total} = calc();
+    el.innerHTML = `<span>${S.members.length} 位成員 · ${S.expenses.length} 筆帳</span>
+      <span class="num">總額 ${fmt(total)} ${esc(S.homeCurrency)}</span>`;
+  }
+}
+
+// 只更新提示文字(不重建輸入框,避免打字時失焦)
+function renderSoft(){
+  const v = validate();
+  const btn = document.getElementById("add-btn");
+  if (btn) btn.disabled = !v.ok;
+  const amt = parseFloat(U.amount)||0;
+  const conv = document.getElementById("convert-hint");
+  if (conv){
+    if (U.currency!==S.homeCurrency && amt>0){
+      conv.style.display="";
+      conv.innerHTML = `≈ ${fmt(amt*rateOf(U.currency))} ${esc(S.homeCurrency)}(匯率 ${rateOf(U.currency)})`;
+    } else conv.style.display="none";
+  }
+  const eq = document.getElementById("equal-hint");
+  if (eq){
+    if (U.splitMode==="equal" && U.sharers.length>0 && amt>0){
+      let t = `每人分攤 ${fmt(amt/U.sharers.length)} ${esc(U.currency)}`;
+      if (U.currency!==S.homeCurrency) t += ` ≈ ${fmt(amt/U.sharers.length*rateOf(U.currency))} ${esc(S.homeCurrency)}`;
+      eq.textContent=""; eq.insertAdjacentHTML("beforeend",t); eq.style.display="";
+    } else eq.style.display="none";
+  }
+  const ck = document.getElementById("custom-check");
+  if (ck && U.splitMode==="custom"){
+    if (amt>0){
+      ck.style.display="";
+      ck.className = "check num " + (v.ok?"ok":"bad");
+      ck.textContent = v.ok
+        ? `✓ 合計 ${fmt(v.sum)} ${U.currency},剛好等於總金額`
+        : v.diff>0 ? `還差 ${fmt(v.diff)} ${U.currency} 未分配`
+        : `超出總金額 ${fmt(-v.diff)} ${U.currency}`;
+    } else ck.style.display="none";
+  }
+}
+
+function render(){
+  const {bal, transfers, total} = calc();
+  const app = document.getElementById("app");
+  const H = esc(S.homeCurrency);
+  const currencyList = [S.homeCurrency, ...Object.keys(S.rates)];
+
+  let html = `
+  <header class="ticket">
+    <div class="eyebrow">TRIP SPLIT · 旅費分帳</div>
+    <input value="${esc(S.tripName)}" aria-label="旅程名稱" oninput="A.setTrip(this.value)">
+    <div class="meta" id="hdr-meta">
+      <span>${S.members.length} 位成員 · ${S.expenses.length} 筆帳</span>
+      <span class="num">總額 ${fmt(total)} ${H}</span>
+    </div>
+    <div class="hole l"></div><div class="hole r"></div>
+  </header>
+  <nav>
+    ${[["expenses","記帳"],["members","成員"],["settle","結算"]].map(([id,label])=>`
+      <button class="${U.tab===id?'on':''}" onclick="A.setTab('${id}')">${label}${
+        id==="settle"&&transfers.length?`<span class="badge">${transfers.length}</span>`:""
+      }</button>`).join("")}
+  </nav>`;
+
+  // ── 成員頁 ──
+  if (U.tab==="members"){
+    html += `
+    <div class="row" style="margin-bottom:14px">
+      <input class="field" style="flex:1;background:var(--paper)" placeholder="輸入名字,例如:小明"
+        value="${esc(U.newMember)}" oninput="U.newMember=this.value" onkeydown="A.keyMember(event)">
+      <button class="btn" style="padding:10px 20px" onclick="A.addMember()">加入</button>
+    </div>`;
+    if (!S.members.length){
+      html += `<p class="empty">還沒有成員。先把一起出遊的朋友加進來吧!</p>`;
+    } else {
+      html += S.members.map(m=>`
+        <div class="item row" style="justify-content:space-between">
+          <span style="font-weight:600">${esc(m)}</span>
+          <span class="row" style="gap:12px">
+            <span class="num ${balClass(bal[m])}" style="font-size:14px">${bal[m]>0.01?"+":""}${fmt(bal[m]||0)}</span>
+            <button class="x" aria-label="移除 ${esc(m)}" onclick="A.removeMember('${esc(m)}')">×</button>
+          </span>
+        </div>`).join("");
+    }
+    if (S.members.length || S.expenses.length){
+      html += `<button onclick="A.resetAll()" style="margin-top:24px;width:100%;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--red);cursor:pointer;font-size:13px">清空整趟旅程資料</button>`;
+    }
+  }
+
+  // ── 記帳頁 ──
+  if (U.tab==="expenses"){
+    if (S.members.length<2){
+      html += `<div class="card" style="text-align:center;font-size:14px;color:#6B7E79;padding:28px 20px">
+        至少需要 2 位成員才能記帳。
+        <button class="btn" style="display:block;margin:14px auto 0;padding:9px 22px" onclick="A.setTab('members')">去新增成員</button>
+      </div>`;
+    } else {
+      const v = validate();
+      // 幣別設定
+      html += `
+      <div class="rates">
+        <div class="row" style="justify-content:space-between">
+          <span style="font-size:13px;font-weight:700">💱 幣別與匯率</span>
+          <button class="link" style="font-size:13px;font-weight:600;text-decoration:none" onclick="A.toggleRates()">${U.showRates?"收合 ▲":"設定 ▼"}</button>
+        </div>`;
+      if (U.showRates){
+        html += `
+        <div style="margin-top:10px">
+          <div class="row" style="margin-bottom:10px">
+            <label style="font-size:13px;color:var(--muted);white-space:nowrap">結算幣別</label>
+            <input class="field" style="width:80px;text-transform:uppercase" value="${H}"
+              onchange="A.setHome(this.value)">
+            <span style="font-size:12px;color:var(--faint)">(最後結算用的幣別)</span>
+          </div>
+          ${Object.entries(S.rates).map(([c,r])=>`
+            <div class="row" style="margin-bottom:8px;font-size:14px">
+              <span class="num" style="font-weight:700;width:44px">${esc(c)}</span>
+              <span style="font-size:13px;color:var(--muted)">1 ${esc(c)} =</span>
+              <input type="number" min="0" step="any" inputmode="decimal" class="field num"
+                style="width:90px;padding:7px 10px" value="${r}"
+                oninput="A.setRate('${esc(c)}',this.value)">
+              <span style="font-size:13px;color:var(--muted)">${H}</span>
+              <button class="x" style="margin-left:auto" onclick="A.removeRate('${esc(c)}')">×</button>
+            </div>`).join("")}
+          <div class="row">
+            <input class="field" style="width:76px;padding:8px 10px;text-transform:uppercase" placeholder="幣別"
+              list="cur-hints" value="${esc(U.newCode)}" oninput="U.newCode=this.value">
+            <datalist id="cur-hints">${COMMON.filter(c=>c!==S.homeCurrency&&!S.rates[c]).map(c=>`<option value="${c}">`).join("")}</datalist>
+            <input class="field num" style="flex:1;padding:8px 10px" type="number" min="0" step="any" inputmode="decimal"
+              placeholder="匯率(1外幣=?${H})" value="${esc(U.newRate)}" oninput="U.newRate=this.value">
+            <button class="btn small" onclick="A.addRate()">新增</button>
+          </div>
+          <div class="hint">例:去日本玩,新增 JPY、匯率填 0.22,代表 1 日圓 = 0.22 ${H}。匯率可隨時修改,結算會即時重算。</div>
+        </div>`;
+      }
+      html += `</div>`;
+
+      // 新增帳目
+      const amt = parseFloat(U.amount)||0;
+      html += `
+      <div class="card">
+        <div class="row" style="margin-bottom:10px">
+          <input class="field" style="flex:1.6" placeholder="項目,例如:晚餐、車票"
+            value="${esc(U.desc)}" oninput="A.input('desc',this.value)">
+          <input class="field num" style="flex:1;min-width:70px" type="number" min="0" inputmode="decimal"
+            placeholder="金額" value="${esc(U.amount)}" oninput="A.input('amount',this.value)">
+          <select class="field num" style="width:84px;padding:10px 6px" onchange="A.inputRe('currency',this.value)">
+            ${currencyList.map(c=>`<option value="${esc(c)}" ${c===U.currency?"selected":""}>${esc(c)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="convert num" id="convert-hint" style="display:${U.currency!==S.homeCurrency&&amt>0?"":"none"}">
+          ≈ ${fmt(amt*rateOf(U.currency))} ${H}(匯率 ${rateOf(U.currency)})
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="label">誰付的錢</label>
+          <select class="field" style="width:100%" onchange="A.inputRe('payer',this.value)">
+            <option value="" disabled ${!U.payer?"selected":""}>選擇付款人</option>
+            ${S.members.map(m=>`<option value="${esc(m)}" ${m===U.payer?"selected":""}>${esc(m)}</option>`).join("")}
+          </select>
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="label" style="margin-bottom:6px">誰要分攤(點選切換)
+            <button class="link" style="margin-left:8px" onclick="A.toggleAll()">${U.sharers.length===S.members.length?"全部取消":"全選"}</button>
+          </label>
+          <div class="row" style="flex-wrap:wrap;gap:6px">
+            ${S.members.map(m=>`<button class="chip ${U.sharers.includes(m)?"on":""}" onclick="A.toggleSharer('${esc(m)}')">${esc(m)}</button>`).join("")}
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="row" style="gap:6px;margin-bottom:8px">
+            <button class="mode ${U.splitMode==="equal"?"on":""}" onclick="A.setMode('equal')">平均分攤</button>
+            <button class="mode ${U.splitMode==="custom"?"on":""}" onclick="A.setMode('custom')">自訂金額</button>
+          </div>`;
+      if (U.splitMode==="equal"){
+        html += `<div class="num" id="equal-hint" style="font-size:12px;color:var(--muted);display:${U.sharers.length&&amt>0?"":"none"}">
+          每人分攤 ${U.sharers.length?fmt(amt/U.sharers.length):0} ${esc(U.currency)}${
+            U.currency!==S.homeCurrency&&U.sharers.length?` ≈ ${fmt(amt/U.sharers.length*rateOf(U.currency))} ${H}`:""}
+        </div>`;
+      } else {
+        if (!U.sharers.length){
+          html += `<div style="font-size:12.5px;color:var(--faint)">先在上面選好要分攤的人。</div>`;
+        } else {
+          html += U.sharers.map(m=>`
+            <div class="row" style="margin-bottom:6px">
+              <span style="font-size:14px;width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m)}</span>
+              <input class="field num" style="flex:1;padding:8px 10px" type="number" min="0" step="any" inputmode="decimal"
+                placeholder="0" value="${esc(U.customShares[m]??"")}" oninput="A.setShare('${esc(m)}',this.value)">
+              <span style="font-size:12px;color:var(--faint)">${esc(U.currency)}</span>
+              <button class="fill-btn" title="填入剩餘金額" onclick="A.fillRemain('${esc(m)}')">補齊</button>
+            </div>`).join("");
+          html += `<div class="check num ${v.ok?"ok":"bad"}" id="custom-check" style="display:${amt>0?"":"none"}">${
+            v.ok ? `✓ 合計 ${fmt(v.sum)} ${esc(U.currency)},剛好等於總金額`
+            : (v.diff>0 ? `還差 ${fmt(v.diff)} ${esc(U.currency)} 未分配` : `超出總金額 ${fmt(-(v.diff||0))} ${esc(U.currency)}`)
+          }</div>`;
+        }
+      }
+      html += `</div>
+        <button class="btn big" id="add-btn" ${v.ok?"":"disabled"} onclick="A.addExpense()">記一筆</button>
+      </div>`;
+
+      // 帳目列表
+      if (!S.expenses.length){
+        html += `<p class="empty" style="padding:24px 0">還沒有帳目。上面記下第一筆吧!</p>`;
+      } else {
+        html += S.expenses.map(e=>{
+          const foreign = e.currency && e.currency!==S.homeCurrency;
+          return `
+          <div class="item">
+            <div class="row" style="justify-content:space-between;align-items:baseline">
+              <span style="font-weight:700">${esc(e.desc)}</span>
+              <span style="text-align:right">
+                <span class="num" style="font-weight:700;font-size:16px">${fmt(e.amount)} ${esc(e.currency||S.homeCurrency)}</span>
+                ${foreign?`<div class="num" style="font-size:11.5px;color:var(--faint)">≈ ${fmt(e.amount*(e.rate||1))} ${H}</div>`:""}
+              </span>
+            </div>
+            <div class="row" style="justify-content:space-between;margin-top:4px;font-size:12.5px;color:var(--muted)">
+              <span>${esc(e.date)} · <b style="color:var(--teal)">${esc(e.payer)}</b> 先付 · ${
+                e.splitMode==="custom" ? `<span style="color:var(--amber);font-weight:700">自訂分攤</span>`
+                : (e.sharers.length===S.members.length ? "全員均分" : esc(e.sharers.join("、"))+" 均分")
+              }</span>
+              <button class="x" style="font-size:15px" aria-label="刪除帳目" onclick="A.removeExpense(${e.id})">×</button>
+            </div>
+            ${e.splitMode==="custom"&&e.customShares?`
+              <div class="num" style="font-size:12px;color:var(--muted);margin-top:5px;background:#F4F6F5;border-radius:7px;padding:6px 10px">
+                ${Object.entries(e.customShares).map(([m,val])=>`${esc(m)} ${fmt(val)}`).join(" · ")}
+              </div>`:""}
+          </div>`;
+        }).join("");
+      }
+    }
+  }
+
+  // ── 結算頁 ──
+  if (U.tab==="settle"){
+    if (!S.expenses.length){
+      html += `<p class="empty">先記幾筆帳,結算結果會出現在這裡。</p>`;
+    } else {
+      html += `
+      <div class="receipt">
+        <div class="head">
+          <div style="font-size:11px;letter-spacing:.3em;color:var(--faint)">SETTLEMENT · 結算收據</div>
+          <div style="font-weight:700;font-size:18px;margin-top:4px">${esc(S.tripName)}</div>
+          <div class="num" style="font-size:13px;color:var(--muted);margin-top:2px">總支出 ${fmt(total)} ${H} · ${S.members.length} 人</div>
+          ${Object.keys(S.rates).length?`<div class="num" style="font-size:11px;color:#A3B2AD;margin-top:4px">
+            匯率:${Object.entries(S.rates).map(([c,r])=>`1 ${esc(c)} = ${r} ${H}`).join(" · ")}</div>`:""}
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="sect">各自的餘額(+ 是要收錢,− 是要付錢,單位 ${H})</div>
+          ${S.members.map(m=>`
+            <div class="balrow"><span>${esc(m)}</span>
+              <span class="num ${balClass(bal[m])}" style="font-weight:700">${bal[m]>0.01?"+":""}${fmt(bal[m])}</span>
+            </div>`).join("")}
+        </div>
+        <div style="border-top:1.5px dashed var(--line);padding-top:14px">
+          <div class="sect" style="margin-bottom:10px">照著轉帳就結清(${transfers.length} 筆,單位 ${H})</div>
+          ${!transfers.length
+            ? `<div style="text-align:center;padding:10px 0;color:var(--teal);font-weight:700">🎉 大家剛好都平了,不用轉帳!</div>`
+            : transfers.map(t=>`
+              <div class="transfer">
+                <span style="font-size:14.5px"><b>${esc(t.from)}</b> <span style="color:var(--muted)">轉給</span> <b>${esc(t.to)}</b></span>
+                <span class="num" style="font-weight:800;color:var(--teal);font-size:16px">${fmt(t.amount)}</span>
+              </div>`).join("")}
+        </div>
+        <div class="foot">─ 旅途愉快 · 帳目兩清 ─</div>
+      </div>`;
+    }
+  }
+
+  app.innerHTML = html;
+}
+
+// ═══════════ 啟動 ═══════════
+(async () => {
+  const d = await store.load();
+  if (d){
+    S = {...S, ...d};
+    U.currency = S.homeCurrency;
+  }
+  render();
+})();
+</script>
+</body>
+</html>
