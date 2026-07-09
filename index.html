@@ -546,19 +546,19 @@ function render(){
       <div class="card" style="padding:18px;margin-bottom:14px">
         <label class="label">你的名字(記帳時顯示用)</label>
         <input class="field" style="width:100%" placeholder="例如:小明"
-          value="${esc(U.lobbyName)}" oninput="U.lobbyName=this.value">
+          value="${esc(U.lobbyName)}"A.setLobbyName(this.value)">
       </div>
       <div class="card" style="padding:18px;margin-bottom:14px">
         <div style="font-weight:700;margin-bottom:10px">🆕 建立新旅程</div>
         <input class="field" style="width:100%;margin-bottom:10px" placeholder="旅程名稱,例如:沖繩四天三夜"
-          value="${esc(U.lobbyTrip)}" oninput="U.lobbyTrip=this.value">
+          value="${esc(U.lobbyTrip)}"A.setLobbyTrip(this.value)">
         <button class="btn big" ${U.lobbyBusy?"disabled":""} onclick="A.createTrip()">${U.lobbyBusy?"處理中⋯":"建立旅程,取得代碼"}</button>
       </div>
       <div class="card" style="padding:18px">
         <div style="font-weight:700;margin-bottom:10px">🔑 加入朋友的旅程</div>
         <input class="field num" style="width:100%;margin-bottom:10px;letter-spacing:.3em;text-align:center;font-size:18px;text-transform:uppercase"
           placeholder="輸入 6 碼旅程代碼" maxlength="6"
-          value="${esc(U.lobbyCode)}" oninput="U.lobbyCode=this.value.toUpperCase()">
+          value="${esc(U.lobbyCode)}"A.setLobbyCode(this.value)">
         <button class="btn big ghost" ${U.lobbyBusy?"disabled":""} onclick="A.joinTrip()">${U.lobbyBusy?"處理中⋯":"加入旅程"}</button>
       </div>
       ${U.lobbyErr?`<div class="errbox">${esc(U.lobbyErr)}</div>`:""}
