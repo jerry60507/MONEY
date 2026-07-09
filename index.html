@@ -279,6 +279,12 @@ const A = window.A = {
   leaveTrip(){ 
     if (confirm("要離開這個旅程嗎?(資料還在,之後用代碼可以再加入)")) leaveTrip(); 
   },
+  setLobbyName(v){ U.lobbyName=v; },
+  setLobbyTrip(v){ U.lobbyTrip=v; },
+  setLobbyCode(v){ U.lobbyCode=v.toUpperCase(); },
+  setNewMember(v){ U.newMember=v; },
+  setNewCode(v){ U.newCode=v.toUpperCase(); },
+  setNewRate(v){ U.newRate=v; },
 
   // ── 成員 ──
   async addMember(){
@@ -546,19 +552,19 @@ function render(){
       <div class="card" style="padding:18px;margin-bottom:14px">
         <label class="label">你的名字(記帳時顯示用)</label>
         <input class="field" style="width:100%" placeholder="例如:小明"
-          value="${esc(U.lobbyName)}"A.setLobbyName(this.value)">
+          value="${esc(U.lobbyName)}" oninput="A.setLobbyName(this.value)">
       </div>
       <div class="card" style="padding:18px;margin-bottom:14px">
         <div style="font-weight:700;margin-bottom:10px">🆕 建立新旅程</div>
         <input class="field" style="width:100%;margin-bottom:10px" placeholder="旅程名稱,例如:沖繩四天三夜"
-          value="${esc(U.lobbyTrip)}"A.setLobbyTrip(this.value)">
+          value="${esc(U.lobbyTrip)}" oninput="A.setLobbyTrip(this.value)">
         <button class="btn big" ${U.lobbyBusy?"disabled":""} onclick="A.createTrip()">${U.lobbyBusy?"處理中⋯":"建立旅程,取得代碼"}</button>
       </div>
       <div class="card" style="padding:18px">
         <div style="font-weight:700;margin-bottom:10px">🔑 加入朋友的旅程</div>
         <input class="field num" style="width:100%;margin-bottom:10px;letter-spacing:.3em;text-align:center;font-size:18px;text-transform:uppercase"
           placeholder="輸入 6 碼旅程代碼" maxlength="6"
-          value="${esc(U.lobbyCode)}"A.setLobbyCode(this.value)">
+          value="${esc(U.lobbyCode)}" oninput="A.setLobbyCode(this.value)">
         <button class="btn big ghost" ${U.lobbyBusy?"disabled":""} onclick="A.joinTrip()">${U.lobbyBusy?"處理中⋯":"加入旅程"}</button>
       </div>
       ${U.lobbyErr?`<div class="errbox">${esc(U.lobbyErr)}</div>`:""}
@@ -607,7 +613,7 @@ function render(){
     </div>
     <div class="row" style="margin-bottom:14px">
       <input class="field" style="flex:1;background:var(--paper)" placeholder="幫沒手機的朋友代加名字"
-        value="${esc(U.newMember)}" oninput="U.newMember=this.value" onkeydown="A.keyMember(event)">
+        value="${esc(U.newMember)}" oninput="A.setNewMember(this.value)" onkeydown="A.keyMember(event)">
       <button class="btn" style="padding:10px 20px" onclick="A.addMember()">加入</button>
     </div>
     <div id="member-list">${memberListHtml(bal)}</div>`;
@@ -641,10 +647,10 @@ function render(){
           </div>`).join("")}
         <div class="row">
           <input class="field" style="width:76px;padding:8px 10px;text-transform:uppercase" placeholder="幣別"
-            list="cur-hints" value="${esc(U.newCode)}" oninput="U.newCode=this.value.toUpperCase()">
+            list="cur-hints" value="${esc(U.newCode)}" oninput="A.setNewCode(this.value)">
           <datalist id="cur-hints">${COMMON.filter(c=>c!==homeCur()&&!rates()[c]).map(c=>`<option value="${c}">`).join("")}</datalist>
           <input class="field num" style="flex:1;padding:8px 10px" type="number" min="0" step="any" inputmode="decimal"
-            placeholder="匯率(1外幣=?${H})" value="${esc(U.newRate)}" oninput="U.newRate=this.value">
+            placeholder="匯率(1外幣=?${H})" value="${esc(U.newRate)}" oninput="A.setNewRate(this.value)">
           <button class="btn small" onclick="A.addRate()">新增</button>
         </div>
         <div class="hint">例:去日本玩,新增 JPY、匯率填 0.22。匯率是全員共用的,改了大家的結算都會即時重算。</div>
