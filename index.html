@@ -190,7 +190,13 @@ const displayDate = date => {
   return date;
 };
 const dateForInput = date => /^\d{4}-\d{2}-\d{2}$/.test(date||"") ? date : today();
-const transferKey = t => `${t.from}|${t.to}|${Math.round(t.amount * 100)}`;
+// Base64 key avoids broken inline JavaScript when a member name includes quotes or symbols.
+const transferKey = t => btoa(unescape(encodeURIComponent(JSON.stringify([t.from,t.to,Math.round(t.amount*100)]))));
+const legacyTransferKey = t => `${t.from}|${t.to}|${Math.round(t.amount*100)}`;
+const threeMonthsAgo = () => { const d=new Date(); d.setMonth(d.getMonth()-3); return d.getTime(); };
+const lastExpenseAt = () => meta?.lastExpenseAt || Math.max(0,...expenses.map(e=>Number(e.createdAt)||Number(e.id)||0),Number(meta?.created)||0);
+const canDeleteTrip = () => lastExpenseAt() > 0 && lastExpenseAt() <= threeMonthsAgo();
+const deleteTripMessage = () => `尚未符合刪除條件：最後新增帳目為 ${new Date(lastExpenseAt()).toLocaleDateString("zh-TW")}；三個月後才可刪除。`;
 function tripHistory(){
   try { const v = JSON.parse(localStorage.getItem(TRIP_HISTORY_KEY)||"[]"); return Array.isArray(v) ? v : []; }
   catch(e){ return []; }
@@ -291,7 +297,7 @@ const A = window.A = {
       }
       await setDoc(doc(db,"trips",c), {
         tripName: U.lobbyTrip.trim() || "我們的旅行",
-        homeCurrency: "TWD", rates: {}, members: [name], created: Date.now(),
+        homeCurrency: "TWD", rates: {}, members: [name], created: Date.now(), lastExpenseAt: null,
       });
       enterTrip(c, name, "members");
     } catch(e){ U.lobbyErr="建立失敗:"+(e.code||e.message); U.lobbyBusy=false; render(); }
@@ -399,11 +405,27 @@ const A = window.A = {
     try { await updateDoc(tripRef(), {settledAt:Date.now(),settledBy:myName}); }
     catch(e){ alert("結算標記儲存失敗，請再試一次。"); }
   },
-  async toggleTransfer(t,checked){
-    try { await setDoc(tripRef(), {settledTransfers:{[transferKey(t)]:checked}}, {merge:true}); }
-    catch(e){ alert("轉帳狀態儲存失敗，請再試一次。"); }
+  async toggleTransfer(key,checked){
+    // Use an atomic array update: it is safe for multiple members to tick different transfers at once.
+    const before=[...(meta?.settledTransferKeys||[])];
+    const beforeCleared=[...(meta?.settledTransferClearedKeys||[])];
+    meta={...meta,
+      settledTransferKeys:checked?[...new Set([...before,key])]:before.filter(k=>k!==key),
+      settledTransferClearedKeys:checked?beforeCleared.filter(k=>k!==key):[...new Set([...beforeCleared,key])],
+    };
+    refreshData();
+    try {
+      await updateDoc(tripRef(), {
+        settledTransferKeys:checked?arrayUnion(key):arrayRemove(key),
+        settledTransferClearedKeys:checked?arrayRemove(key):arrayUnion(key),
+      });
+    } catch(e){
+      meta={...meta,settledTransferKeys:before,settledTransferClearedKeys:beforeCleared}; refreshData();
+      alert("轉帳狀態儲存失敗，請確認 Firebase 權限或網路後再試一次。");
+    }
   },
   async deleteTrip(){
+    if (!canDeleteTrip()) { alert(deleteTripMessage()); return; }
     if (!confirm(`確定要刪除「${meta?.tripName||code}」嗎？\n\n所有成員、帳目與結算紀錄都會永久刪除，無法復原。`)) return;
     try {
       while(true){
@@ -424,11 +446,14 @@ const A = window.A = {
       payer:U.payer, sharers:[...U.sharers], splitMode:U.splitMode,
       customShares: U.splitMode==="custom"
         ? Object.fromEntries(U.sharers.map(m=>[m,parseFloat(U.customShares[m])||0])) : null,
-      by: myName,
+      by: myName, createdAt:id,
       date: U.date || today(),
     };
     try {
-      await setDoc(doc(expCol(), docId), exp);
+      const batch=writeBatch(db);
+      batch.set(doc(expCol(),docId),exp);
+      batch.update(tripRef(),{lastExpenseAt:id});
+      await batch.commit();
       U.desc=""; U.amount=""; U.customShares={}; U.date=today();
       render();
     } catch(e){ alert("儲存失敗,請檢查網路後再試一次。"); }
@@ -662,12 +687,15 @@ function settleHtmlOld(bal, transfers, total){
 }
 
 function settleHtml(bal,transfers,total){
-  const H=esc(homeCur()), statuses=meta?.settledTransfers||{};
-  const done=transfers.filter(t=>statuses[transferKey(t)]).length;
+  const H=esc(homeCur()), completed=new Set(meta?.settledTransferKeys||[]), cleared=new Set(meta?.settledTransferClearedKeys||[]);
+  // Keep the previous map as read-only fallback so existing checked items remain visible after upgrade.
+  const legacyStatuses=meta?.settledTransfers||{};
+  const isCompleted=t=>!cleared.has(transferKey(t)) && (completed.has(transferKey(t)) || legacyStatuses[legacyTransferKey(t)]===true);
+  const done=transfers.filter(isCompleted).length;
   return `<div class="receipt">
     <div class="head"><div style="font-size:11px;letter-spacing:.3em;color:var(--faint)">SETTLEMENT ・ 結算單</div><div style="font-weight:700;font-size:18px;margin-top:4px">${esc(meta?.tripName||"")} <span class="num" style="font-size:12px;color:var(--faint)">#${esc(code)}</span></div><div class="num" style="font-size:13px;color:var(--muted);margin-top:2px">總支出 ${fmt(total)} ${H} ・ ${members().length} 人</div>${meta?.settledAt?`<div class="check ok" style="margin-top:8px">已於 ${new Date(meta.settledAt).toLocaleDateString("zh-TW")} 由 ${esc(meta.settledBy||"成員")} 標記結算</div>`:""}</div>
     <div style="margin-bottom:16px"><div class="sect">各成員餘額（正數應收，負數應付；單位：${H}）</div>${members().map(m=>`<div class="balrow"><span>${esc(m)}</span><span class="num ${balClass(bal[m])}" style="font-weight:700">${bal[m]>0.01?"+":""}${fmt(bal[m])}</span></div>`).join("")}</div>
-    <div style="border-top:1.5px dashed var(--line);padding-top:14px"><div class="sect" style="margin-bottom:10px">建議轉帳 ${transfers.length} 筆 ・ 已完成 ${done}/${transfers.length}</div>${!transfers.length?`<div style="text-align:center;padding:10px 0;color:var(--teal);font-weight:700">✓ 目前帳目已平衡，不需要轉帳。</div>`:transfers.map(t=>{const key=transferKey(t),checked=!!statuses[key],mine=t.from===myName||t.to===myName; return `<div class="transfer ${mine?"mine":""}"><span style="font-size:14.5px"><b>${esc(t.from)}</b> <span style="color:var(--muted)">轉給</span> <b>${esc(t.to)}</b></span><span class="row" style="gap:10px"><span class="num" style="font-weight:800;color:var(--teal);font-size:16px">${fmt(t.amount)}</span><label class="transfer-status"><input type="checkbox" ${checked?"checked":""} onchange="A.toggleTransfer({from:'${esc(t.from)}',to:'${esc(t.to)}',amount:${t.amount}},this.checked)">${checked?"已轉帳":"待轉帳"}</label></span></div>`;}).join("")}</div>
+    <div style="border-top:1.5px dashed var(--line);padding-top:14px"><div class="sect" style="margin-bottom:10px">建議轉帳 ${transfers.length} 筆 ・ 已完成 ${done}/${transfers.length}</div>${!transfers.length?`<div style="text-align:center;padding:10px 0;color:var(--teal);font-weight:700">✓ 目前帳目已平衡，不需要轉帳。</div>`:transfers.map(t=>{const key=transferKey(t),checked=isCompleted(t),mine=t.from===myName||t.to===myName; return `<div class="transfer ${mine?"mine":""}"><span style="font-size:14.5px"><b>${esc(t.from)}</b> <span style="color:var(--muted)">轉給</span> <b>${esc(t.to)}</b></span><span class="row" style="gap:10px"><span class="num" style="font-weight:800;color:var(--teal);font-size:16px">${fmt(t.amount)}</span><label class="transfer-status"><input type="checkbox" ${checked?"checked":""} onchange="A.toggleTransfer('${key}',this.checked)">${checked?"已轉帳":"待轉帳"}</label></span></div>`;}).join("")}</div>
     <div class="foot">・ 旅程分帳 ・</div>
   </div>`;
 }
@@ -751,8 +779,9 @@ function render(){
     <div class="row" style="gap:8px;margin-bottom:14px">
       <button class="btn small" style="flex:1" onclick="A.shareLine()">LINE 分享邀請</button>
       <button class="btn small ghost" style="flex:1" onclick="A.settleTrip()">結算旅程</button>
-      <button class="btn small ghost danger" onclick="A.deleteTrip()">刪除旅程</button>
+      <button class="btn small ghost danger" ${canDeleteTrip()?"":"disabled"} title="${canDeleteTrip()?"刪除所有旅程資料":deleteTripMessage()}" onclick="A.deleteTrip()">刪除旅程</button>
     </div>
+    <div class="hint" style="margin:-8px 0 14px">${canDeleteTrip()?"此旅程已超過三個月沒有新增帳目，可以刪除。":deleteTripMessage()}</div>
     <div class="row" style="margin-bottom:14px">
       <input class="field" style="flex:1;background:var(--paper)" placeholder="幫沒手機的朋友代加名字"
         value="${esc(U.newMember)}" oninput="A.setNewMember(this.value)" onkeydown="A.keyMember(event)">
