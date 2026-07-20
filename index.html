@@ -19,11 +19,11 @@
   input:focus,select:focus{outline:2px solid var(--teal);outline-offset:1px}
   button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
   .num{font-variant-numeric:tabular-nums;font-family:'SF Mono','Cascadia Mono',Consolas,monospace}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
+  
   .ticket{background:var(--teal);color:var(--paper);border-radius:14px;
-    padding:18px 20px 14px;margin-bottom:10px;position:relative;overflow:hidden}
+    padding:18px 20px 14px;margin-bottom:10px;position:relative;overflow:hidden; transition: all 0.3s;}
+  .ticket.editing{background:var(--amber); color:var(--ink);}
+  .ticket.editing input.trip-name {color:var(--ink);}
   .ticket .eyebrow{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.2em;opacity:.8;margin-bottom:4px}
   .ticket input.trip-name{background:transparent;border:none;color:var(--paper);
     font-size:22px;font-weight:700;width:100%;padding:0}
@@ -45,17 +45,22 @@
   .card{background:var(--paper);border-radius:12px;padding:16px;margin-bottom:16px;
     box-shadow:0 1px 3px rgba(22,48,43,.08)}
   .row{display:flex;gap:8px;align-items:center}
-  .field{padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#fff;min-width:0}
+  .field{padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#fff;min-width:0; appearance: none;}
   .btn{padding:0 20px;border-radius:10px;border:none;background:var(--teal);
-    color:var(--paper);font-weight:700;cursor:pointer}
+    color:var(--paper);font-weight:700;cursor:pointer; display: flex; justify-content: center; align-items: center; gap: 6px;}
   .btn.small{padding:8px 14px;font-size:13px;border-radius:9px}
   .btn.big{width:100%;padding:12px 0;border-radius:10px}
   .btn.ghost{background:transparent;border:1.5px solid var(--teal);color:var(--teal)}
+  .btn.line{background:#06C755; color:white; border:none;}
+  .btn.danger{background:var(--red); color:white;}
+  .btn.edit-mode{background:var(--amber); color:var(--ink);}
   .btn:disabled{background:#C7D4D0;cursor:default;border:none;color:var(--paper)}
+  
   .label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
   .link{border:none;background:transparent;color:var(--teal);cursor:pointer;
     font-size:12px;text-decoration:underline;padding:0}
-  .x{border:none;background:transparent;color:#A3B2AD;cursor:pointer;font-size:17px;line-height:1;padding:2px 4px}
+  .action-btn{border:none;background:transparent;color:#A3B2AD;cursor:pointer;font-size:16px;line-height:1;padding:4px; border-radius: 6px;}
+  .action-btn:hover{background:var(--bg); color:var(--teal);}
   .empty{text-align:center;color:#6B7E79;padding:40px 0;font-size:14px}
   .errbox{margin-top:14px;background:#F9E3DC;color:var(--red);border-radius:9px;
     padding:10px 14px;font-size:13.5px;font-weight:600}
@@ -68,7 +73,8 @@
   .mode.on{border-color:var(--teal);background:var(--teal);color:var(--paper)}
 
   .item{background:var(--paper);border-radius:10px;padding:12px 14px;margin-bottom:8px;
-    box-shadow:0 1px 2px rgba(22,48,43,.06)}
+    box-shadow:0 1px 2px rgba(22,48,43,.06); transition: background 0.3s;}
+  .item.editing { background: var(--amber-soft); border: 1px solid var(--amber); }
   .pos{color:var(--teal)} .neg{color:var(--red)} .zero{color:var(--faint)}
 
   .rates{background:var(--amber-soft);border-radius:12px;padding:12px 14px;margin-bottom:12px}
@@ -80,9 +86,7 @@
   .check{font-size:12.5px;margin-top:6px;border-radius:7px;padding:7px 10px;font-weight:600}
   .check.ok{background:var(--teal-soft);color:var(--teal)}
   .check.bad{background:#F9E3DC;color:var(--red)}
-  .fill-btn{border:1px solid var(--line);background:transparent;color:var(--teal);cursor:pointer;
-    font-size:11.5px;border-radius:7px;padding:5px 8px;white-space:nowrap}
-
+  
   .receipt{background:var(--paper);padding:22px 20px 26px;box-shadow:0 2px 8px rgba(22,48,43,.1);
     -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,
       radial-gradient(circle at 8px 0,transparent 8px,#000 8px) bottom/16px 8px repeat-x;
@@ -92,22 +96,49 @@
   .receipt .sect{font-size:12px;color:var(--faint);margin-bottom:8px}
   .balrow{display:flex;justify-content:space-between;padding:5px 0;font-size:14.5px}
   .transfer{display:flex;justify-content:space-between;align-items:center;
-    background:var(--teal-soft);border-radius:9px;padding:11px 14px;margin-bottom:8px}
+    background:var(--teal-soft);border-radius:9px;padding:11px 14px;margin-bottom:8px; border:1px solid transparent;}
   .transfer.mine{background:var(--amber-soft)}
+  .transfer.settled{opacity: 0.6; background: var(--bg); border-color: var(--line);}
+  .transfer.settled .num {text-decoration: line-through; color:var(--muted);}
   .foot{text-align:center;margin-top:16px;font-size:11px;letter-spacing:.2em;color:#A3B2AD}
 
   .center-screen{min-height:100vh;display:grid;place-items:center;color:var(--teal)}
-  .setup{max-width:520px;margin:0 auto;padding:40px 20px;line-height:1.8}
-  .setup code{background:#E3E9E7;border-radius:5px;padding:2px 6px;font-size:13px}
+  
+  .modal-overlay { position: fixed; inset: 0; background: rgba(22,48,43,0.6); backdrop-filter: blur(2px);
+    display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;}
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-box { background: var(--paper); width: 100%; max-width: 340px; border-radius: 16px; padding: 24px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); transform: scale(0.95); transition: transform 0.2s;}
+  .modal-overlay.active .modal-box { transform: scale(1); }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; color:var(--ink); }
+  .modal-desc { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  
+  .history-trip { display:flex; justify-content:space-between; align-items:center; padding: 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+  .history-trip:hover { background: var(--teal-soft); border-color: var(--teal); }
+  
+  .custom-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--muted); user-select: none;}
+  .custom-checkbox input { appearance: none; width: 18px; height: 18px; border: 2px solid var(--faint); border-radius: 4px; margin:0; outline: none; transition: 0.2s; position: relative; cursor: pointer;}
+  .custom-checkbox input:checked { background: var(--teal); border-color: var(--teal); }
+  .custom-checkbox input:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 </style>
 </head>
 <body>
 <div id="app"><div class="center-screen">載入中⋯</div></div>
 
+<div id="modal" class="modal-overlay">
+  <div class="modal-box">
+    <div id="modal-title" class="modal-title">提示</div>
+    <div id="modal-desc" class="modal-desc">內容</div>
+    <div class="modal-actions">
+      <button class="btn ghost small" onclick="Modal.close()">取消</button>
+      <button id="modal-confirm" class="btn small">確定</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-// ╔══════════════════════════════════════════════════════════╗
-// ║  第 1 步:把你的 Firebase 設定貼在下面(部署教學有說明)   ║
-// ╚══════════════════════════════════════════════════════════╝
 const firebaseConfig = {
   apiKey: "AIzaSyAopkJDsw7UoLRuoQQIM7pQskAvvbev294",
   authDomain: "trip-split-e9535.firebaseapp.com",
@@ -116,61 +147,58 @@ const firebaseConfig = {
   messagingSenderId: "569232089168",
   appId: "1:569232089168:web:4c1534daca8005ac61b155",
 };
-// ══════════════════════════════════════════════════════════
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection,
-  onSnapshot, arrayUnion, arrayRemove, deleteField
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, arrayUnion, arrayRemove, deleteField, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const $app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => {
   const r = Math.round(n*100)/100;
-  return Number.isInteger(r) ? r.toLocaleString()
-    : r.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:2});
+  return Number.isInteger(r) ? r.toLocaleString() : r.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:2});
 };
-
-// ── 尚未貼設定:顯示提示畫面 ──
-if (firebaseConfig.apiKey.startsWith("貼上")) {
-  $app.innerHTML = `<div class="setup">
-    <h2 style="color:var(--teal)">還差一步:貼上 Firebase 設定</h2>
-    <p>這個檔案需要連到你自己的 Firebase 專案才能運作。請打開本檔案,找到最上方的
-    <code>firebaseConfig</code> 區塊,把 Firebase 控制台給你的設定貼進去。</p>
-    <p>完整步驟請看附上的「<b>部署教學.md</b>」,照著做約 20 分鐘就能上線。</p>
-  </div>`;
-  throw new Error("Firebase config not set");
+const getToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 
-// ═══════════ 狀態 ═══════════
-const COMMON = ["JPY","USD","KRW","EUR","THB","VND","CNY","HKD","SGD","GBP","AUD"];
+// 注意：因環境強制規定，路徑需改為 /artifacts/{appId}/public/data/trips
+const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+const TRIPS_PATH = ['artifacts', appId, 'public', 'data', 'trips'];
+
 const SESSION_KEY = "trip-split-session";
+const HISTORY_KEY = "trip-split-history"; // 儲存多個旅程紀錄
+
 let code = "", myName = "";
-let meta = null;                 // {tripName, homeCurrency, rates, members}
+let meta = null;                 
 let expenses = [];
 let unsubMeta = null, unsubExp = null;
 let live = false, syncErr = false;
 
-let U = {                        // UI 暫存(不同步)
+// UI 暫存狀態
+let U = {
   screen:"loading", tab:"expenses", showRates:false,
-  desc:"", amount:"", currency:"TWD", payer:"", sharers:[],
+  desc:"", amount:"", currency:"TWD", payer:"", sharers:[], date: getToday(),
   splitMode:"equal", customShares:{}, newMember:"",
   newCode:"", newRate:"", lobbyName:"", lobbyCode:"", lobbyTrip:"", lobbyErr:"", lobbyBusy:false,
+  editingId: null, // 記錄目前正在編輯的帳目 ID
+  history: JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")
 };
 
 const members = () => meta?.members || [];
 const homeCur = () => meta?.homeCurrency || "TWD";
 const rates = () => meta?.rates || {};
 const rateOf = c => c === homeCur() ? 1 : (rates()[c] || 0);
-const tripRef = () => doc(db, "trips", code);
-const expCol = () => collection(db, "trips", code, "expenses");
+const settledMap = () => meta?.settledTransfers || {}; 
+
+// 確保 Firestore 路徑正確
+const tripRef = () => doc(db, ...TRIPS_PATH, code);
+const expCol = () => collection(db, ...TRIPS_PATH, code, "expenses");
 
 const genCode = () => {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -180,11 +208,28 @@ const genCode = () => {
   return s;
 };
 
-// ═══════════ 即時監聽 ═══════════
+const Modal = {
+  show(title, desc, confirmText, onConfirm, isDanger = false) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-desc').innerHTML = desc;
+    const btn = document.getElementById('modal-confirm');
+    btn.textContent = confirmText;
+    btn.className = `btn small ${isDanger ? 'danger' : ''}`;
+    btn.onclick = () => { onConfirm(); this.close(); };
+    document.getElementById('modal').classList.add('active');
+  },
+  close() {
+    document.getElementById('modal').classList.remove('active');
+  }
+};
+
 function attachListeners() {
   detachListeners();
   unsubMeta = onSnapshot(tripRef(), snap => {
-    if (!snap.exists()) { alert("這個旅程已被刪除。"); leaveTrip(true); return; }
+    if (!snap.exists()) { 
+      Modal.show("旅程已結束", "這個旅程已經被刪除。", "返回大廳", () => leaveTrip(true)); 
+      return; 
+    }
     meta = snap.data();
     if (!members().includes(U.payer)) U.payer = members().includes(myName) ? myName : "";
     U.sharers = U.sharers.filter(m => members().includes(m));
@@ -204,7 +249,6 @@ function detachListeners(){
   unsubMeta = unsubExp = null; live = false;
 }
 
-// ═══════════ 結算計算 ═══════════
 function calc(){
   const bal = Object.fromEntries(members().map(m=>[m,0]));
   let total = 0;
@@ -229,7 +273,7 @@ function calc(){
   const transfers=[]; let i=0,j=0;
   while (i<debtors.length && j<creditors.length){
     const pay = Math.min(debtors[i].v, creditors[j].v);
-    transfers.push({from:debtors[i].m, to:creditors[j].m, amount:pay});
+    transfers.push({from:debtors[i].m, to:creditors[j].m, amount:pay, key:`${debtors[i].m}_${creditors[j].m}`});
     debtors[i].v -= pay; creditors[j].v -= pay;
     if (debtors[i].v < 0.01) i++;
     if (creditors[j].v < 0.01) j++;
@@ -238,13 +282,11 @@ function calc(){
 }
 const balClass = v => v>0.01?"pos":v<-0.01?"neg":"zero";
 
-// ═══════════ 動作 ═══════════
 const A = window.A = {
   setTab(t){ U.tab=t; render(); },
   input(k,v){ U[k]=v; refreshHints(); },
   inputRe(k,v){ U[k]=v; render(); },
 
-  // ── 大廳 ──
   async createTrip(){
     const name = U.lobbyName.trim();
     if (!name){ U.lobbyErr="請先輸入你的名字"; render(); return; }
@@ -252,41 +294,58 @@ const A = window.A = {
     try {
       let c = genCode();
       for (let i=0;i<3;i++){
-        if (!(await getDoc(doc(db,"trips",c))).exists()) break;
+        if (!(await getDoc(doc(db,...TRIPS_PATH,c))).exists()) break;
         c = genCode();
       }
-      await setDoc(doc(db,"trips",c), {
-        tripName: U.lobbyTrip.trim() || "我們的旅行",
-        homeCurrency: "TWD", rates: {}, members: [name], created: Date.now(),
+      const tripName = U.lobbyTrip.trim() || "我們的旅行";
+      await setDoc(doc(db,...TRIPS_PATH,c), {
+        tripName: tripName, homeCurrency: "TWD", rates: {}, members: [name], created: Date.now(), settledTransfers: {}
       });
-      enterTrip(c, name, "members");
+      enterTrip(c, name, tripName, "members");
     } catch(e){ U.lobbyErr="建立失敗:"+(e.code||e.message); U.lobbyBusy=false; render(); }
   },
-  async joinTrip(){
+  async joinTrip(targetCode = null){
     const name = U.lobbyName.trim();
-    const c = U.lobbyCode.trim().toUpperCase();
+    const c = (targetCode || U.lobbyCode).trim().toUpperCase();
     if (!name){ U.lobbyErr="請先輸入你的名字"; render(); return; }
     if (!c){ U.lobbyErr="請輸入旅程代碼"; render(); return; }
     U.lobbyBusy=true; U.lobbyErr=""; render();
     try {
-      const snap = await getDoc(doc(db,"trips",c));
+      const snap = await getDoc(doc(db,...TRIPS_PATH,c));
       if (!snap.exists()){ U.lobbyErr=`找不到代碼 ${c} 的旅程,請確認代碼。`; U.lobbyBusy=false; render(); return; }
-      if (!snap.data().members.includes(name))
-        await updateDoc(doc(db,"trips",c), { members: arrayUnion(name) });
-      enterTrip(c, name, "expenses");
+      const data = snap.data();
+      if (!data.members.includes(name)) await updateDoc(doc(db,...TRIPS_PATH,c), { members: arrayUnion(name) });
+      enterTrip(c, name, data.tripName, "expenses");
     } catch(e){ U.lobbyErr="加入失敗:"+(e.code||e.message); U.lobbyBusy=false; render(); }
   },
-  leaveTrip(){ 
-    if (confirm("要離開這個旅程嗎?(資料還在,之後用代碼可以再加入)")) leaveTrip(); 
+  leaveTripPrompt(){ 
+    Modal.show("離開旅程", "要離開這個旅程嗎？<br><small>資料還在，之後用代碼可以再加入。</small>", "離開", () => leaveTrip());
   },
-  setLobbyName(v){ U.lobbyName=v; },
-  setLobbyTrip(v){ U.lobbyTrip=v; },
-  setLobbyCode(v){ U.lobbyCode=v.toUpperCase(); },
-  setNewMember(v){ U.newMember=v; },
-  setNewCode(v){ U.newCode=v.toUpperCase(); },
-  setNewRate(v){ U.newRate=v; },
+  
+  async deleteTripPrompt(){
+    Modal.show("刪除旅程", "<strong style='color:var(--red)'>警告：此動作無法復原！</strong><br>將刪除整個旅程、所有人名單與所有帳目。", "確認刪除", async () => {
+      try {
+        const batch = writeBatch(db);
+        const expDocs = await getDocs(expCol());
+        expDocs.forEach(d => batch.delete(d.ref));
+        batch.delete(tripRef());
+        await batch.commit();
+        
+        // 移除本地歷史
+        U.history = U.history.filter(h => h.code !== code);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(U.history));
+        leaveTrip(true);
+      } catch(e) { alert("刪除失敗:" + e.message); }
+    }, true);
+  },
+  shareToLine(){
+    const text = `邀請你加入「${meta.tripName}」一起記帳！\n代碼：${code}\n網址：${location.href}`;
+    window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, '_blank');
+  },
+  
+  setLobbyName(v){ U.lobbyName=v; }, setLobbyTrip(v){ U.lobbyTrip=v; }, setLobbyCode(v){ U.lobbyCode=v.toUpperCase(); },
+  setNewMember(v){ U.newMember=v; }, setNewCode(v){ U.newCode=v.toUpperCase(); }, setNewRate(v){ U.newRate=v; },
 
-  // ── 成員 ──
   async addMember(){
     const n = U.newMember.trim();
     if (!n || members().includes(n)) return;
@@ -296,15 +355,12 @@ const A = window.A = {
   },
   async removeMember(n){
     if (expenses.some(e=>e.payer===n||e.sharers.includes(n))){
-      alert(`「${n}」已經有帳目紀錄,請先刪除相關帳目再移除成員。`); return;
+      Modal.show("無法移除", `「${n}」已經有帳目紀錄,請先刪除相關帳目再移除成員。`, "了解", ()=>{}); return;
     }
-    if (n===myName){ alert("不能移除自己,請改用「離開旅程」。"); return; }
-    try { await updateDoc(tripRef(), { members: arrayRemove(n) }); }
-    catch(e){ alert("儲存失敗,請再試一次。"); }
+    if (n===myName){ Modal.show("無法移除", "不能移除自己,請改用「離開旅程」。", "了解", ()=>{}); return; }
+    try { await updateDoc(tripRef(), { members: arrayRemove(n) }); } catch(e){ alert("儲存失敗,請再試一次。"); }
   },
-  keyMember(ev){ if (ev.key==="Enter") A.addMember(); },
-
-  // ── 旅程設定 ──
+  
   saveTripName(v){ if (v.trim() && v!==meta.tripName) updateDoc(tripRef(),{tripName:v.trim()}).catch(()=>{}); },
   setHome(v){
     const h = v.toUpperCase().slice(0,5).trim();
@@ -317,24 +373,13 @@ const A = window.A = {
     U.newCode=""; U.newRate="";
     updateDoc(tripRef(),{[`rates.${c}`]:r}).catch(()=>alert("儲存失敗"));
   },
-  setRate(c,v){
-    const r = parseFloat(v);
-    if (r>0) updateDoc(tripRef(),{[`rates.${c}`]:r}).catch(()=>{});
-  },
   removeRate(c){
-    if (expenses.some(e=>e.currency===c)){ alert(`已有帳目使用 ${c},無法刪除。可直接修改匯率。`); return; }
+    if (expenses.some(e=>e.currency===c)){ Modal.show("無法刪除", `已有帳目使用 ${c}，可直接修改匯率。`, "了解", ()=>{}); return; }
     updateDoc(tripRef(),{[`rates.${c}`]:deleteField()}).catch(()=>alert("刪除失敗"));
   },
-
-  // ── 記帳 ──
-  toggleSharer(m){
-    U.sharers = U.sharers.includes(m) ? U.sharers.filter(x=>x!==m) : [...U.sharers,m];
-    render();
-  },
-  toggleAll(){
-    U.sharers = U.sharers.length===members().length ? [] : [...members()];
-    render();
-  },
+  
+  toggleSharer(m){ U.sharers = U.sharers.includes(m) ? U.sharers.filter(x=>x!==m) : [...U.sharers,m]; render(); },
+  toggleAll(){ U.sharers = U.sharers.length===members().length ? [] : [...members()]; render(); },
   setMode(m){ U.splitMode=m; render(); },
   setShare(m,v){ U.customShares[m]=v; refreshHints(); },
   fillRemain(m){
@@ -343,43 +388,87 @@ const A = window.A = {
     const remain = Math.round((amt-others)*100)/100;
     if (remain>=0){ U.customShares[m]=String(remain); render(); }
   },
-  async addExpense(){
+  
+  editExpense(id){
+    const e = expenses.find(x => x._docId === id);
+    if(!e) return;
+    U.editingId = id;
+    U.desc = e.desc; U.amount = String(e.amount); U.currency = e.currency;
+    U.payer = e.payer; U.sharers = [...e.sharers]; U.splitMode = e.splitMode;
+    U.customShares = e.customShares ? {...e.customShares} : {};
+    U.date = e.rawDate || getToday();
+    U.tab = "expenses";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    render();
+  },
+  cancelEdit(){
+    U.editingId = null;
+    U.desc=""; U.amount=""; U.customShares={}; U.date=getToday();
+    render();
+  },
+  
+  async saveExpense(){
     const v = validate();
     if (!v.ok) return;
-    const id = Date.now();
-    const docId = `${id}-${Math.random().toString(36).slice(2,6)}`;
+    const isEdit = !!U.editingId;
+    const id = isEdit ? expenses.find(x=>x._docId===U.editingId).id : Date.now();
+    const docId = isEdit ? U.editingId : `${id}-${Math.random().toString(36).slice(2,6)}`;
+    
+    // 轉換格式 YYYY-MM-DD -> MM/DD
+    const dParts = U.date.split('-');
+    const displayDate = dParts.length === 3 ? `${parseInt(dParts[1])}/${parseInt(dParts[2])}` : U.date;
+
     const exp = {
       id, desc:U.desc.trim(), amount:v.amt, currency:U.currency, rate:rateOf(U.currency),
       payer:U.payer, sharers:[...U.sharers], splitMode:U.splitMode,
-      customShares: U.splitMode==="custom"
-        ? Object.fromEntries(U.sharers.map(m=>[m,parseFloat(U.customShares[m])||0])) : null,
-      by: myName,
-      date: new Date().toLocaleDateString("zh-TW",{month:"numeric",day:"numeric"}),
+      customShares: U.splitMode==="custom" ? Object.fromEntries(U.sharers.map(m=>[m,parseFloat(U.customShares[m])||0])) : null,
+      by: myName, date: displayDate, rawDate: U.date
     };
+    
     try {
-      await setDoc(doc(expCol(), docId), exp);
-      U.desc=""; U.amount=""; U.customShares={};
-      render();
+      if (isEdit) await updateDoc(doc(expCol(), docId), exp);
+      else await setDoc(doc(expCol(), docId), exp);
+      A.cancelEdit();
     } catch(e){ alert("儲存失敗,請檢查網路後再試一次。"); }
   },
-  async removeExpense(docSnapId){
-    try { await deleteDoc(doc(expCol(), docSnapId)); }
-    catch(e){ alert("刪除失敗,請再試一次。"); }
+  
+  removeExpensePrompt(docSnapId){
+    Modal.show("刪除帳目", "確定要刪除這筆帳目嗎？", "刪除", async () => {
+      try { 
+        await deleteDoc(doc(expCol(), docSnapId)); 
+        if(U.editingId === docSnapId) A.cancelEdit();
+      } catch(e){ alert("刪除失敗,請再試一次。"); }
+    }, true);
   },
+  
+  async toggleSettle(key) {
+    const current = settledMap()[key] || false;
+    try {
+      await updateDoc(tripRef(), { [`settledTransfers.${key}`]: !current });
+    } catch(e) { console.log(e); }
+  }
 };
 
-function enterTrip(c, name, tab){
+function saveToHistory(c, n, tName) {
+  U.history = U.history.filter(h => h.code !== c);
+  U.history.unshift({ code: c, name: n, tripName: tName, time: Date.now() });
+  if (U.history.length > 5) U.history.pop();
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(U.history));
+}
+
+function enterTrip(c, name, tripName, tab){
   code = c; myName = name;
-  try { localStorage.setItem(SESSION_KEY, JSON.stringify({code:c, name})); } catch(e){}
-  U.screen="trip"; U.tab=tab; U.payer=name; U.lobbyBusy=false;
-  meta=null; expenses=[];
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({code:c, name, tripName})); } catch(e){}
+  saveToHistory(c, name, tripName);
+  U.screen="trip"; U.tab=tab; U.payer=name; U.lobbyBusy=false; U.editingId=null;
+  meta=null; expenses=[]; U.date=getToday();
   attachListeners();
   render();
 }
 function leaveTrip(silent){
   detachListeners();
   try { localStorage.removeItem(SESSION_KEY); } catch(e){}
-  code=""; myName=""; meta=null; expenses=[];
+  code=""; myName=""; meta=null; expenses=[]; U.editingId=null;
   U.screen="lobby"; U.lobbyCode=""; U.lobbyErr=""; U.sharers=[]; U.payer="";
   render();
 }
@@ -393,25 +482,29 @@ function validate(){
   return {ok: !!base && Math.abs(diff)<0.01, amt, sum, diff};
 }
 
-// ═══════════ 渲染 ═══════════
-// 資料異動時只更新資料區塊,不重建表單(避免打字被中斷)
 function refreshData(){
   if (U.screen!=="trip") return;
   const {bal, transfers, total} = calc();
   refreshSyncbar();
+  
   const hm = document.getElementById("hdr-meta");
-  if (hm) hm.innerHTML = `<span>${esc(myName)} · ${members().length} 位成員 · ${expenses.length} 筆帳</span>
-    <span class="num">總額 ${fmt(total)} ${esc(homeCur())}</span>`;
+  if (hm) hm.innerHTML = `<span>${esc(myName)} · ${members().length} 位成員 · ${expenses.length} 筆帳</span><span class="num">總額 ${fmt(total)} ${esc(homeCur())}</span>`;
+  
   const badge = document.getElementById("settle-badge");
   if (badge) badge.outerHTML = settleBadge(transfers.length);
+  
   const ml = document.getElementById("member-list");
   if (ml) ml.innerHTML = memberListHtml(bal);
+  
   const el = document.getElementById("exp-list");
   if (el) el.innerHTML = expListHtml();
+  
   const sb = document.getElementById("settle-box");
   if (sb) sb.innerHTML = settleHtml(bal, transfers, total);
+  
   const chips = document.getElementById("sharer-chips");
   if (chips) chips.innerHTML = chipsHtml();
+  
   const ps = document.getElementById("payer-select");
   if (ps){
     ps.innerHTML = `<option value="" disabled ${!U.payer?"selected":""}>選擇付款人</option>` +
@@ -430,6 +523,7 @@ function refreshHints(){
   const btn = document.getElementById("add-btn");
   if (btn) btn.disabled = !v.ok;
   const amt = parseFloat(U.amount)||0;
+  
   const conv = document.getElementById("convert-hint");
   if (conv){
     if (U.currency!==homeCur() && amt>0){
@@ -437,6 +531,7 @@ function refreshHints(){
       conv.textContent = `≈ ${fmt(amt*rateOf(U.currency))} ${homeCur()}(匯率 ${rateOf(U.currency)})`;
     } else conv.style.display="none";
   }
+  
   const eq = document.getElementById("equal-hint");
   if (eq){
     if (U.splitMode==="equal" && U.sharers.length>0 && amt>0){
@@ -445,15 +540,14 @@ function refreshHints(){
         (U.currency!==homeCur() ? ` ≈ ${fmt(amt/U.sharers.length*rateOf(U.currency))} ${homeCur()}` : "");
     } else eq.style.display="none";
   }
+  
   const ck = document.getElementById("custom-check");
   if (ck && U.splitMode==="custom"){
     if (amt>0){
       ck.style.display="";
       ck.className = "check num " + (v.ok?"ok":"bad");
-      ck.textContent = v.ok
-        ? `✓ 合計 ${fmt(v.sum)} ${U.currency},剛好等於總金額`
-        : v.diff>0 ? `還差 ${fmt(v.diff)} ${U.currency} 未分配`
-        : `超出總金額 ${fmt(-v.diff)} ${U.currency}`;
+      ck.textContent = v.ok ? `✓ 合計 ${fmt(v.sum)} ${U.currency},剛好等於總金額`
+        : v.diff>0 ? `還差 ${fmt(v.diff)} ${U.currency} 未分配` : `超出總金額 ${fmt(-v.diff)} ${U.currency}`;
     } else ck.style.display="none";
   }
 }
@@ -461,8 +555,7 @@ function refreshHints(){
 const settleBadge = n => `<span id="settle-badge">${n?`<span class="badge">${n}</span>`:""}</span>`;
 
 function chipsHtml(){
-  return members().map(m=>
-    `<button class="chip ${U.sharers.includes(m)?"on":""}" onclick="A.toggleSharer('${esc(m)}')">${esc(m)}</button>`).join("");
+  return members().map(m=>`<button class="chip ${U.sharers.includes(m)?"on":""}" onclick="A.toggleSharer('${esc(m)}')">${esc(m)}</button>`).join("");
 }
 function memberListHtml(bal){
   return members().map(m=>`
@@ -470,7 +563,9 @@ function memberListHtml(bal){
       <span style="font-weight:600">${esc(m)}${m===myName?'<span style="font-size:11px;color:var(--teal);margin-left:6px;font-weight:700">(我)</span>':""}</span>
       <span class="row" style="gap:12px">
         <span class="num ${balClass(bal[m])}" style="font-size:14px">${bal[m]>0.01?"+":""}${fmt(bal[m]||0)}</span>
-        ${m!==myName?`<button class="x" aria-label="移除 ${esc(m)}" onclick="A.removeMember('${esc(m)}')">×</button>`:""}
+        ${m!==myName?`<button class="action-btn" aria-label="移除 ${esc(m)}" onclick="A.removeMember('${esc(m)}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>`:""}
       </span>
     </div>`).join("");
 }
@@ -478,8 +573,9 @@ function expListHtml(){
   if (!expenses.length) return `<p class="empty" style="padding:24px 0">還沒有帳目。上面記下第一筆吧!</p>`;
   return expenses.map(e=>{
     const foreign = e.currency && e.currency!==homeCur();
+    const isEditing = U.editingId === e._docId;
     return `
-    <div class="item">
+    <div class="item ${isEditing ? 'editing' : ''}">
       <div class="row" style="justify-content:space-between;align-items:baseline">
         <span style="font-weight:700">${esc(e.desc)}</span>
         <span style="text-align:right">
@@ -492,7 +588,15 @@ function expListHtml(){
           e.splitMode==="custom" ? `<span style="color:var(--amber);font-weight:700">自訂分攤</span>`
           : (e.sharers.length===members().length ? "全員均分" : esc(e.sharers.join("、"))+" 均分")
         }${e.by&&e.by!==e.payer?`<span style="color:var(--faint)"> · ${esc(e.by)} 記的</span>`:""}</span>
-        <button class="x" style="font-size:15px" aria-label="刪除帳目" onclick="A.removeExpense('${esc(e._docId)}')">×</button>
+        
+        <div class="row" style="gap:2px">
+          ${!isEditing ? `<button class="action-btn" aria-label="編輯帳目" onclick="A.editExpense('${esc(e._docId)}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </button>` : ''}
+          <button class="action-btn" aria-label="刪除帳目" onclick="A.removeExpensePrompt('${esc(e._docId)}')">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          </button>
+        </div>
       </div>
       ${e.splitMode==="custom"&&e.customShares?`
         <div class="num" style="font-size:12px;color:var(--muted);margin-top:5px;background:#F4F6F5;border-radius:7px;padding:6px 10px">
@@ -525,19 +629,27 @@ function settleHtml(bal, transfers, total){
         ? `<div style="text-align:center;padding:10px 0;color:var(--teal);font-weight:700">🎉 大家剛好都平了,不用轉帳!</div>`
         : transfers.map(t=>{
             const mine = t.from===myName || t.to===myName;
-            return `<div class="transfer ${mine?"mine":""}">
-              <span style="font-size:14.5px"><b>${esc(t.from)}</b> <span style="color:var(--muted)">轉給</span> <b>${esc(t.to)}</b>${
-                mine?'<span style="font-size:11px;color:var(--amber);font-weight:700;margin-left:5px">與我有關</span>':""}</span>
+            const isSettled = settledMap()[t.key];
+            return `<div class="transfer ${mine?"mine":""} ${isSettled?"settled":""}">
+              <div>
+                <span style="font-size:14.5px; display:block; margin-bottom:4px"><b>${esc(t.from)}</b> <span style="color:var(--muted)">轉給</span> <b>${esc(t.to)}</b>${mine?'<span style="font-size:11px;color:var(--amber);font-weight:700;margin-left:5px">與我有關</span>':""}</span>
+                <label class="custom-checkbox">
+                  <input type="checkbox" ${isSettled?"checked":""} onchange="A.toggleSettle('${t.key}')"> 已結清
+                </label>
+              </div>
               <span class="num" style="font-weight:800;color:var(--teal);font-size:16px">${fmt(t.amount)}</span>
             </div>`;
           }).join("")}
     </div>
     <div class="foot">─ 旅途愉快 · 帳目兩清 ─</div>
+  </div>
+  <div style="margin-top:24px; text-align:center;">
+    <button class="btn ghost danger" style="width:100%; border-color:var(--red); color:var(--red);" onclick="A.deleteTripPrompt()">刪除此旅程與所有紀錄</button>
   </div>`;
 }
 
 function render(){
-  // ── 大廳 ──
+  // 大廳
   if (U.screen==="lobby"){
     $app.innerHTML = `
     <div style="max-width:420px;margin:0 auto;padding:40px 20px">
@@ -549,45 +661,57 @@ function render(){
         </div>
         <div class="hole l"></div><div class="hole r"></div>
       </header>
+      
       <div class="card" style="padding:18px;margin-bottom:14px">
         <label class="label">你的名字(記帳時顯示用)</label>
-        <input class="field" style="width:100%" placeholder="例如:小明"
-          value="${esc(U.lobbyName)}" oninput="A.setLobbyName(this.value)">
+        <input class="field" style="width:100%" placeholder="例如:小明" value="${esc(U.lobbyName)}" oninput="A.setLobbyName(this.value)">
       </div>
+      
+      ${U.history.length > 0 ? `
+      <div class="card" style="padding:18px;margin-bottom:14px">
+        <div style="font-weight:700;margin-bottom:10px; color:var(--teal);">🕒 最近參與的旅程</div>
+        ${U.history.map(h => `
+          <div class="history-trip" onclick="A.setLobbyName('${esc(h.name)}'); A.joinTrip('${h.code}')">
+            <div>
+              <div style="font-weight:600; color:var(--ink)">${esc(h.tripName)}</div>
+              <div style="font-size:12px; color:var(--muted)">代碼: <span class="num">${esc(h.code)}</span> · 姓名: ${esc(h.name)}</div>
+            </div>
+            <div style="color:var(--teal)">➔</div>
+          </div>
+        `).join('')}
+      </div>` : ''}
+      
       <div class="card" style="padding:18px;margin-bottom:14px">
         <div style="font-weight:700;margin-bottom:10px">🆕 建立新旅程</div>
         <input class="field" style="width:100%;margin-bottom:10px" placeholder="旅程名稱,例如:沖繩四天三夜"
           value="${esc(U.lobbyTrip)}" oninput="A.setLobbyTrip(this.value)">
         <button class="btn big" ${U.lobbyBusy?"disabled":""} onclick="A.createTrip()">${U.lobbyBusy?"處理中⋯":"建立旅程,取得代碼"}</button>
       </div>
+      
       <div class="card" style="padding:18px">
         <div style="font-weight:700;margin-bottom:10px">🔑 加入朋友的旅程</div>
         <input class="field num" style="width:100%;margin-bottom:10px;letter-spacing:.3em;text-align:center;font-size:18px;text-transform:uppercase"
-          placeholder="輸入 6 碼旅程代碼" maxlength="6"
-          value="${esc(U.lobbyCode)}" oninput="A.setLobbyCode(this.value)">
+          placeholder="輸入 6 碼旅程代碼" maxlength="6" value="${esc(U.lobbyCode)}" oninput="A.setLobbyCode(this.value)">
         <button class="btn big ghost" ${U.lobbyBusy?"disabled":""} onclick="A.joinTrip()">${U.lobbyBusy?"處理中⋯":"加入旅程"}</button>
       </div>
       ${U.lobbyErr?`<div class="errbox">${esc(U.lobbyErr)}</div>`:""}
-      <div class="hint" style="margin-top:18px;line-height:1.7">
-        提醒:知道代碼的人都能查看與編輯該旅程的帳目,請勿記錄敏感資訊。
-      </div>
     </div>`;
     return;
   }
 
-  // ── 旅程主畫面 ──
+  // 旅程主畫面
   const {bal, transfers, total} = calc();
   const v = validate();
   const amt = parseFloat(U.amount)||0;
   const H = esc(homeCur());
   const currencyList = [homeCur(), ...Object.keys(rates())];
+  const isEdit = !!U.editingId;
 
   let html = `
   <div class="wrap">
-    <header class="ticket">
-      <div class="eyebrow"><span>TRIP SPLIT · 旅費分帳</span><span class="num" style="letter-spacing:.25em">#${esc(code)}</span></div>
-      <input class="trip-name" value="${esc(meta?.tripName||"載入中⋯")}" aria-label="旅程名稱"
-        onchange="A.saveTripName(this.value)">
+    <header class="ticket ${isEdit ? 'editing' : ''}">
+      <div class="eyebrow"><span>${isEdit ? 'EDIT MODE · 編輯模式' : 'TRIP SPLIT · 旅費分帳'}</span><span class="num" style="letter-spacing:.25em">#${esc(code)}</span></div>
+      <input class="trip-name" value="${esc(meta?.tripName||"載入中⋯")}" aria-label="旅程名稱" onchange="A.saveTripName(this.value)">
       <div class="meta" id="hdr-meta">
         <span>${esc(myName)} · ${members().length} 位成員 · ${expenses.length} 筆帳</span>
         <span class="num">總額 ${fmt(total)} ${H}</span>
@@ -595,25 +719,27 @@ function render(){
       <div class="hole l"></div><div class="hole r"></div>
     </header>
     <div class="syncbar">
-      <span class="status ${syncErr?"err":live?"live":""}" id="sync-status">${
-        syncErr?"⚠ 連線中斷,恢復網路後會自動同步":live?"● 即時同步中":"連線中⋯"}</span>
-      <button class="link" style="font-size:12px;text-decoration:none;font-weight:700" onclick="A.leaveTrip()">離開旅程</button>
+      <span class="status ${syncErr?"err":live?"live":""}" id="sync-status">${syncErr?"⚠ 連線中斷,恢復網路後會自動同步":live?"● 即時同步中":"連線中⋯"}</span>
+      <button class="link" style="font-size:12px;text-decoration:none;font-weight:700" onclick="A.leaveTripPrompt()">離開旅程</button>
     </div>
     <nav>
       ${[["expenses","記帳"],["members","成員"],["settle","結算"]].map(([id,label])=>`
-        <button class="${U.tab===id?'on':''}" onclick="A.setTab('${id}')">${label}${
-          id==="settle"?settleBadge(transfers.length):""}</button>`).join("")}
+        <button class="${U.tab===id?'on':''}" onclick="A.setTab('${id}')">${label}${id==="settle"?settleBadge(transfers.length):""}</button>`).join("")}
     </nav>`;
 
   if (U.tab==="members"){
     html += `
     <div class="invite">
-      <div style="font-size:12.5px;color:var(--muted);margin-bottom:4px">把網址和這組代碼傳給朋友,他們就能加入一起記帳</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:4px">把網址和這組代碼傳給朋友,他們就能加入</div>
       <div class="code num">${esc(code)}</div>
+      <button class="btn line" style="margin: 12px auto 0; padding:8px 16px; border-radius:8px;" onclick="A.shareToLine()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.3c0-4.3-4.2-7.8-9.4-7.8S5.2 6 5.2 10.3c0 3.8 2.8 7 6.7 7.7.3.1.8.2.9.5.1.2 0 .8 0 1-.1.4-.4 1.4-.4 1.6 0 .2-.1.5.3.7.2.1.4.1.7 0 .5-.2 2.7-1.6 3.7-2.7 1.8-1.9 3.1-4.2 3.1-6.8zM8.3 11.9H6.9c-.3 0-.5-.2-.5-.5V8.1c0-.3.2-.5.5-.5h1.4c.3 0 .5.2.5.5v2.8h1.1c.3 0 .5.2.5.5 0 .2-.2.5-.5.5zm4.8-1.4c0 .3-.2.5-.5.5h-1.4c-.3 0-.5-.2-.5-.5V8.1c0-.3.2-.5.5-.5h1.4c.3 0 .5.2.5.5v3.3zm2.5-.5c0 .3-.2.5-.5.5h-1.1v.9c0 .3-.2.5-.5.5s-.5-.2-.5-.5V8.1c0-.3.2-.5.5-.5h1.6c.3 0 .5.2.5.5 0 .2-.2.5-.5.5h-1.1v.9h1.1c.3 0 .5.2.5.5zm3.8-1.4c0 .3-.2.5-.5.5h-1.1l-1.3 2.7c-.1.1-.2.2-.3.2s-.1 0-.2-.1c-.1-.1-.1-.3-.1-.5V8.1c0-.3.2-.5.5-.5h.1c.2 0 .4.2.4.4v1.8l1.3-2.6c.1-.1.2-.2.4-.2h1.1c.3 0 .5.2.5.5v3.4z"/></svg>
+        分享到 LINE
+      </button>
     </div>
     <div class="row" style="margin-bottom:14px">
       <input class="field" style="flex:1;background:var(--paper)" placeholder="幫沒手機的朋友代加名字"
-        value="${esc(U.newMember)}" oninput="A.setNewMember(this.value)" onkeydown="A.keyMember(event)">
+        value="${esc(U.newMember)}" oninput="A.setNewMember(this.value)" onkeydown="if(event.key==='Enter')A.addMember()">
       <button class="btn" style="padding:10px 20px" onclick="A.addMember()">加入</button>
     </div>
     <div id="member-list">${memberListHtml(bal)}</div>`;
@@ -631,39 +757,32 @@ function render(){
       <div style="margin-top:10px">
         <div class="row" style="margin-bottom:10px">
           <label style="font-size:13px;color:var(--muted);white-space:nowrap">結算幣別</label>
-          <input class="field" style="width:80px;text-transform:uppercase" value="${H}"
-            onchange="A.setHome(this.value)">
-          <span style="font-size:12px;color:var(--faint)">(最後結算用)</span>
+          <input class="field" style="width:80px;text-transform:uppercase" value="${H}" onchange="A.setHome(this.value)">
         </div>
         ${Object.entries(rates()).map(([c,r])=>`
           <div class="row" style="margin-bottom:8px;font-size:14px">
             <span class="num" style="font-weight:700;width:44px">${esc(c)}</span>
             <span style="font-size:13px;color:var(--muted)">1 ${esc(c)} =</span>
-            <input type="number" min="0" step="any" inputmode="decimal" class="field num"
-              style="width:90px;padding:7px 10px" value="${r}"
-              onchange="A.setRate('${esc(c)}',this.value)">
+            <input type="number" min="0" step="any" inputmode="decimal" class="field num" style="width:90px;padding:7px 10px" value="${r}" onchange="A.setRate('${esc(c)}',this.value)">
             <span style="font-size:13px;color:var(--muted)">${H}</span>
-            <button class="x" style="margin-left:auto" onclick="A.removeRate('${esc(c)}')">×</button>
+            <button class="action-btn" style="margin-left:auto" onclick="A.removeRate('${esc(c)}')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
           </div>`).join("")}
         <div class="row">
-          <input class="field" style="width:76px;padding:8px 10px;text-transform:uppercase" placeholder="幣別"
-            list="cur-hints" value="${esc(U.newCode)}" oninput="A.setNewCode(this.value)">
-          <datalist id="cur-hints">${COMMON.filter(c=>c!==homeCur()&&!rates()[c]).map(c=>`<option value="${c}">`).join("")}</datalist>
-          <input class="field num" style="flex:1;padding:8px 10px" type="number" min="0" step="any" inputmode="decimal"
-            placeholder="匯率(1外幣=?${H})" value="${esc(U.newRate)}" oninput="A.setNewRate(this.value)">
+          <input class="field" style="width:76px;padding:8px 10px;text-transform:uppercase" placeholder="幣別" value="${esc(U.newCode)}" oninput="A.setNewCode(this.value)">
+          <input class="field num" style="flex:1;padding:8px 10px" type="number" min="0" step="any" inputmode="decimal" placeholder="匯率" value="${esc(U.newRate)}" oninput="A.setNewRate(this.value)">
           <button class="btn small" onclick="A.addRate()">新增</button>
         </div>
-        <div class="hint">例:去日本玩,新增 JPY、匯率填 0.22。匯率是全員共用的,改了大家的結算都會即時重算。</div>
       </div>`;
     }
     html += `</div>
 
-    <div class="card">
+    <div class="card" style="border: ${isEdit ? '2px solid var(--amber)' : 'none'}; position: relative;">
+      ${isEdit ? '<div style="position:absolute; top:-12px; left:12px; background:var(--amber); color:white; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700;">編輯中</div>' : ''}
       <div class="row" style="margin-bottom:10px">
-        <input class="field" style="flex:1.6" placeholder="項目,例如:晚餐、車票"
-          value="${esc(U.desc)}" oninput="A.input('desc',this.value)">
-        <input class="field num" style="flex:1;min-width:70px" type="number" min="0" inputmode="decimal"
-          placeholder="金額" value="${esc(U.amount)}" oninput="A.input('amount',this.value)">
+        <input class="field" style="flex:1.6" placeholder="項目,例如:晚餐" value="${esc(U.desc)}" oninput="A.input('desc',this.value)">
+        <input class="field num" style="flex:1;min-width:70px" type="number" min="0" inputmode="decimal" placeholder="金額" value="${esc(U.amount)}" oninput="A.input('amount',this.value)">
         <select class="field num" style="width:84px;padding:10px 6px" onchange="A.inputRe('currency',this.value)">
           ${currencyList.map(c=>`<option value="${esc(c)}" ${c===U.currency?"selected":""}>${esc(c)}</option>`).join("")}
         </select>
@@ -671,24 +790,34 @@ function render(){
       <div class="convert num" id="convert-hint" style="display:${U.currency!==homeCur()&&amt>0?"":"none"}">
         ≈ ${fmt(amt*rateOf(U.currency))} ${H}(匯率 ${rateOf(U.currency)})
       </div>
-      <div style="margin-bottom:10px">
-        <label class="label">誰付的錢</label>
-        <select class="field" style="width:100%" id="payer-select" onchange="A.input('payer',this.value)">
-          <option value="" disabled ${!U.payer?"selected":""}>選擇付款人</option>
-          ${members().map(m=>`<option value="${esc(m)}" ${m===U.payer?"selected":""}>${esc(m)}${m===myName?"(我)":""}</option>`).join("")}
-        </select>
+      
+      <div class="row" style="margin-bottom:10px">
+        <div style="flex:1">
+          <label class="label">誰付的錢</label>
+          <select class="field" style="width:100%" id="payer-select" onchange="A.input('payer',this.value)">
+            <option value="" disabled ${!U.payer?"selected":""}>選擇付款人</option>
+            ${members().map(m=>`<option value="${esc(m)}" ${m===U.payer?"selected":""}>${esc(m)}${m===myName?"(我)":""}</option>`).join("")}
+          </select>
+        </div>
+        <div style="width:130px">
+          <label class="label">日期</label>
+          <input type="date" class="field num" style="width:100%; padding:9px;" value="${esc(U.date)}" onchange="A.input('date',this.value)">
+        </div>
       </div>
+      
       <div style="margin-bottom:12px">
         <label class="label" style="margin-bottom:6px">誰要分攤(點選切換)
           <button class="link" style="margin-left:8px" onclick="A.toggleAll()">${U.sharers.length===members().length?"全部取消":"全選"}</button>
         </label>
         <div class="row" style="flex-wrap:wrap;gap:6px" id="sharer-chips">${chipsHtml()}</div>
       </div>
+      
       <div style="margin-bottom:12px">
         <div class="row" style="gap:6px;margin-bottom:8px">
           <button class="mode ${U.splitMode==="equal"?"on":""}" onclick="A.setMode('equal')">平均分攤</button>
           <button class="mode ${U.splitMode==="custom"?"on":""}" onclick="A.setMode('custom')">自訂金額</button>
         </div>`;
+        
     if (U.splitMode==="equal"){
       html += `<div class="num" id="equal-hint" style="font-size:12px;color:var(--muted);display:${U.sharers.length&&amt>0?"":"none"}">
         每人分攤 ${U.sharers.length?fmt(amt/U.sharers.length):0} ${esc(U.currency)}${
@@ -700,19 +829,21 @@ function render(){
         html += U.sharers.map(m=>`
           <div class="row" style="margin-bottom:6px">
             <span style="font-size:14px;width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m)}</span>
-            <input class="field num" style="flex:1;padding:8px 10px" type="number" min="0" step="any" inputmode="decimal"
-              placeholder="0" value="${esc(U.customShares[m]??"")}" oninput="A.setShare('${esc(m)}',this.value)">
+            <input class="field num" style="flex:1;padding:8px 10px" type="number" min="0" step="any" inputmode="decimal" placeholder="0" value="${esc(U.customShares[m]??"")}" oninput="A.setShare('${esc(m)}',this.value)">
             <span style="font-size:12px;color:var(--faint)">${esc(U.currency)}</span>
             <button class="fill-btn" title="填入剩餘金額" onclick="A.fillRemain('${esc(m)}')">補齊</button>
           </div>`).join("");
-        html += `<div class="check num ${v.ok?"ok":"bad"}" id="custom-check" style="display:${amt>0?"":"none"}">${
-          v.ok ? `✓ 合計 ${fmt(v.sum)} ${esc(U.currency)},剛好等於總金額`
-          : (v.diff>0 ? `還差 ${fmt(v.diff)} ${esc(U.currency)} 未分配` : `超出總金額 ${fmt(-(v.diff||0))} ${esc(U.currency)}`)
-        }</div>`;
+        html += `<div class="check num ${v.ok?"ok":"bad"}" id="custom-check" style="display:${amt>0?"":"none"}"></div>`;
       }
     }
+    
     html += `</div>
-      <button class="btn big" id="add-btn" ${v.ok?"":"disabled"} onclick="A.addExpense()">記一筆</button>
+      <div class="row">
+        ${isEdit ? `<button class="btn big ghost" style="flex:1" onclick="A.cancelEdit()">取消</button>` : ''}
+        <button class="btn big ${isEdit ? 'edit-mode' : ''}" style="flex:2" id="add-btn" ${v.ok?"":"disabled"} onclick="A.saveExpense()">
+          ${isEdit ? "儲存修改" : "記一筆"}
+        </button>
+      </div>
     </div>
     <div id="exp-list">${expListHtml()}</div>`;
   }
@@ -725,17 +856,16 @@ function render(){
 
   html += `</div>`;
   $app.innerHTML = html;
+  if(U.tab === "expenses") refreshHints();
 }
 
-// ═══════════ 啟動 ═══════════
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
-  // 嘗試恢復上次的旅程
   try {
     const s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
     if (s && s.code && s.name) {
-      const snap = await getDoc(doc(db, "trips", s.code));
-      if (snap.exists()) { enterTrip(s.code, s.name, "expenses"); return; }
+      const snap = await getDoc(doc(db, ...TRIPS_PATH, s.code));
+      if (snap.exists()) { enterTrip(s.code, s.name, s.tripName || snap.data().tripName, "expenses"); return; }
       localStorage.removeItem(SESSION_KEY);
     }
   } catch(e){}
@@ -747,8 +877,6 @@ signInAnonymously(auth).catch(e => {
   $app.innerHTML = `<div class="setup">
     <h2 style="color:var(--red)">無法連線到 Firebase</h2>
     <p>錯誤:<code>${esc(e.code||e.message)}</code></p>
-    <p>常見原因:① 尚未在 Firebase 控制台啟用「匿名」登入方式(Authentication → Sign-in method → 匿名);
-    ② firebaseConfig 貼錯;③ 網域未加入授權清單(Authentication → Settings → 授權網域)。</p>
   </div>`;
 });
 </script>
